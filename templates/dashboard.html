@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tuya Paired Devices Dashboard</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="search-bar">
+                <i class="fas fa-search"></i>
+                <input type="text" placeholder="Search...">
+            </div>
+            <div class="user-profile">
+                <i class="fas fa-user"></i>
+            </div>
+        </div>
+
+        <div class="row">
+            <!-- Main Weather and Room Temperature Card -->
+            <div class="col-md-12 mb-4">
+                <div class="card weather-card">
+                    <div class="row align-items-center">
+                        <!-- Weather Section -->
+                        <div class="col-md-6">
+                            <div class="location-info mb-4">
+                                <div class="d-flex align-items-center">
+                                    <i class="fas fa-map-marker-alt me-2"></i>
+                                    <h2 class="card-title mb-0">{{ weather.location }}</h2>
+                                </div>
+                            </div>
+                            
+                            <div class="weather-date">{{ weather.date }}</div>
+                            <div class="weather-temp">{{ weather.temperature }}°C</div>
+                            <div class="weather-condition">
+                                <i class="fas fa-cloud-sun"></i>
+                                <span>{{ weather.condition }}</span>
+                            </div>
+                        </div>
+                        
+                        <!-- Room Temperature Section -->
+                        <div class="col-md-6">
+                            <div class="room-temp-container">
+                                <div class="thermometer">
+                                    <div class="thermometer-bulb"></div>
+                                    <div class="thermometer-stem">
+                                        <div class="thermometer-mercury" style="height: {{ room_temperature | default(0) }}%;"></div>
+                                    </div>
+                                </div>
+                                <div class="room-temp-info">
+                                    <h3>Room Temperature</h3>
+                                    <div class="room-temp-value">{{ room_temperature | default(0) }}°C</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Today's Highlights -->
+            <div class="col-md-6 mb-4">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title">Today's Highlights</h5>
+                        <div class="weather-details">
+                            <div class="detail-item">
+                                <i class="fas fa-tint"></i>
+                                <div>
+                                    <div>Humidity</div>
+                                    <div>{{ weather.humidity }}%</div>
+                                </div>
+                            </div>
+                            <div class="detail-item">
+                                <i class="fas fa-sun"></i>
+                                <div>
+                                    <div>UV Index</div>
+                                    <div>{{ weather.uv_index }}</div>
+                                </div>
+                            </div>
+                            <div class="detail-item">
+                                <i class="fas fa-wind"></i>
+                                <div>
+                                    <div>Wind Speed</div>
+                                    <div>{{ weather.wind_speed }} mph</div>
+                                </div>
+                            </div>
+                            <div class="detail-item">
+                                <i class="fas fa-temperature-low"></i>
+                                <div>
+                                    <div>Feels Like</div>
+                                    <div>{{ weather.feels_like }}°C</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tuya Paired Devices -->
+            <div class="col-md-6 mb-4">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title">Tuya Paired Devices</h5>
+                        <ul class="list-group">
+                            {% for device in paired_devices %}
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                <span>{{ device[1] }} ({{ device[4] }})</span>
+                                <label class="toggle-switch">
+                                    <input type="checkbox" 
+                                           {% if device[7] %}checked{% endif %}
+                                           onchange="toggleDevicePower('{{ device[2] }}', this.checked)">
+                                    <span class="toggle-slider"></span>
+                                </label>
+                                <a href="{{ url_for('delete_device', device_id=device[2]) }}" class="btn btn-sm btn-danger ms-2">Delete</a>
+                            </li>
+                            {% endfor %}
+                        </ul>
+                        <a href="{{ url_for('show_add_device_form') }}" class="btn btn-primary mt-2">Add Paired Device</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Other Cities -->
+            <div class="col-md-6 mb-4">
+                <div class="card">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h5 class="card-title mb-0">Other Cities</h5>
+                            <a href="#" style="color: var(--primary-color); text-decoration: none;">Show All</a>
+                        </div>
+                        <div class="other-cities mt-3">
+                            {% for city, data in city_weather.items() %}
+                            <div class="city-card">
+                                <i class="fas fa-sun"></i>
+                                <div>
+                                    <div>{{ city }}</div>
+                                    <div>{{ data.temperature }}°C</div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sunrise/Sunset -->
+            <div class="col-md-6 mb-4">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title">Sun & Moon</h5>
+                        <div class="sun-moon-info">
+                            <div class="sun-moon-card">
+                                <i class="fas fa-sun"></i>
+                                <div>Sunrise</div>
+                                <div>{{ weather.sunrise }}</div>
+                            </div>
+                            <div class="sun-moon-card">
+                                <i class="fas fa-moon"></i>
+                                <div>Sunset</div>
+                                <div>{{ weather.sunset }}</div>
+                            </div>
+                        </div>
+                        <div class="text-center mt-3">
+                            <div>Length of day</div>
+                            <div class="mt-2">{{ weather.sunrise }}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function toggleDevicePower(deviceId, powerState) {
+            fetch(`/toggle_power/${deviceId}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ powerState: powerState }),
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log('Power state changed:', data);
+            })
+            .catch(error => {
+                console.error('Error changing power state:', error);
+            });
+        }
+
+        // Fetch and update room temperature every 30 seconds
+        setInterval(function() {
+            fetch('/temperature')
+                .then(response => response.json())
+                .then(data => {
+                    document.querySelector('.room-temp-value').textContent = data.temperature + '°C';
+                    document.querySelector('.thermometer-mercury').style.height = data.temperature + '%';
+                });
+        }, 30000);
+    </script>
+</body>
+</html>
